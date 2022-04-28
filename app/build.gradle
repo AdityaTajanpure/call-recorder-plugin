@@ -1,0 +1,60 @@
+apply plugin: 'com.android.application'
+apply plugin: 'com.github.axet.dxplugin'
+
+android {
+    compileSdkVersion 28
+
+    defaultConfig {
+        applicationId "com.github.axet.callrecorder"
+        minSdkVersion 9
+        //noinspection ExpiredTargetSdkVersion
+        targetSdkVersion 28
+        versionCode 224
+        versionName "1.8.3"
+    }
+    buildTypes {
+        debug {
+            debuggable true
+            jniDebuggable true
+            minifyEnabled false
+        }
+        release {
+            shrinkResources true
+            minifyEnabled true
+            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+        }
+    }
+    applicationVariants.all { variant ->
+    }
+    bundle {
+        abi {
+            enableSplit = true
+        }
+    }
+    splits {
+        abi {
+            enable false
+            universalApk true
+        }
+    }
+}
+
+def surveys = project.file('src/main/res/raw/surveys.csv')
+
+task fetch() {
+    def url = 'https://docs.google.com/spreadsheets/d/1C6HuLIk3k4SmAYEuKOnQynGEPM39rjlu90oX7bYbqLk/gviz/tq?gid=1685986704&tqx=out:csv'
+    if (!surveys.exists())
+        new URL(url).withInputStream { i -> surveys.withOutputStream { it << i } }
+}
+
+clean.doLast {
+    surveys.delete()
+}
+
+preBuild.dependsOn fetch
+
+dependencies {
+    implementation 'com.github.axet:android-audio-library:1.1.13' // implementation project(':android-audio-library')
+    implementation "org.apache.commons:commons-csv:1.5"
+    assets('com.google.android.exoplayer:exoplayer:2.7.3') { exclude group: 'com.android.support' }
+}
